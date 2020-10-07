@@ -7,16 +7,17 @@ from typing import Callable, Any, Union, List
 def precondition(check: Callable[[Any], bool], key: str, pos: int = None):
     """
     This function will check the preconditions of a parameter of the decorated function
+
     :param check: a lambda or function taking in a single value and returning a boolean
     :param key: named parameter to check with this precondition
     :param pos: the position if this parameter for this precondition is given positionally
-    :return: wrapped function
     """
 
     def conditioner(func):
         @functools.wraps(func)
         def check_condition(*args, **kwargs):
             f_sig = [i[0] for i in Signature.from_callable(func).parameters.items()]
+            # Get the passed value either as a positional or kw arg
             try:
                 v = kwargs[key]
             except KeyError:
@@ -28,7 +29,9 @@ def precondition(check: Callable[[Any], bool], key: str, pos: int = None):
             if check(v):
                 return func(*args, **kwargs)
             else:
-                raise AssertionError(f"Precondition failed for {func.__name__}({key} = {v})")
+                raise AssertionError(
+                    f"Precondition failed for {func.__name__}({key} = {v})"
+                )
 
         return check_condition
 
@@ -38,9 +41,9 @@ def precondition(check: Callable[[Any], bool], key: str, pos: int = None):
 def post_condition(check: Callable[[Any, Any], bool], cap_ctx: Union[List[str], str]):
     """
     Checks if the return value of a function is the expected one
-    :param check:
-    :param cap_ctx:
-    :return:
+
+    :param check: a callable that takes the context and the returned value and returns an bool
+    :param cap_ctx: context to capture from calls to the function
     """
 
     def conditioner(func):
@@ -48,10 +51,11 @@ def post_condition(check: Callable[[Any, Any], bool], cap_ctx: Union[List[str], 
         def check_condition(*args, **kwargs):
             sig_params = {}
             f_sig = [i[0] for i in Signature.from_callable(func).parameters.items()]
+            # wrap the signature parameters in a dict for ease of access
             for (k, v) in Signature.from_callable(func).parameters.items():
                 sig_params[k] = (k, v)
-
             old = {}
+            # build the old context with the requested item(s)
             if isinstance(cap_ctx, list):
                 for ctx_i in cap_ctx:
                     try:
@@ -70,12 +74,14 @@ def post_condition(check: Callable[[Any, Any], bool], cap_ctx: Union[List[str], 
                     except IndexError:
                         old[cap_ctx] = sig_params[cap_ctx][1].default
 
+            # run the wrapped function
             new = func(*args, **kwargs)
             if check(old, new):
                 return new
             else:
                 raise AssertionError(
-                    f"Post condition failed for {func.__name__} with an old context of {old}, returned {new}")
+                    f"Post condition failed for {func.__name__} with an old context of {old}, returned {new}"
+                )
 
         return check_condition
 
