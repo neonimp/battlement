@@ -7,10 +7,10 @@ from typing import Callable, Any, Union, List
 def precondition(check: Callable[[Any], bool], key: str, pos: int = None):
     """
     This function will check the preconditions of a parameter of the decorated function
+
     :param check: a lambda or function taking in a single value and returning a boolean
     :param key: named parameter to check with this precondition
     :param pos: the position if this parameter for this precondition is given positionally
-    :return: wrapped function
     """
 
     def conditioner(func):
@@ -38,9 +38,9 @@ def precondition(check: Callable[[Any], bool], key: str, pos: int = None):
 def post_condition(check: Callable[[Any, Any], bool], cap_ctx: Union[List[str], str]):
     """
     Checks if the return value of a function is the expected one
-    :param check:
-    :param cap_ctx:
-    :return:
+
+    :param check: a callable that takes the context and the returned value and returns an bool
+    :param cap_ctx: context to capture from calls to the function
     """
 
     def conditioner(func):
